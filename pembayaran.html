@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pembayaran QRIS - Mlaku Coffee</title>
+    <style>
+        :root {
+            --bg-color: #f7f4eb;
+            --primary-color: #e03a24;
+            --dark-color: #1a1513;
+            --text-muted: #6c757d;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color);
+            padding: 40px 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+        @media (max-width: 900px) {
+            .grid-layout { grid-template-columns: 1fr; }
+        }
+        .step-item { display: flex; margin-bottom: 25px; }
+        .step-number {
+            background-color: var(--primary-color); color: white;
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; margin-right: 15px; flex-shrink: 0;
+        }
+        .step-content h3 { margin: 0 0 5px 0; font-size: 16px; }
+        .step-content p { margin: 0; font-size: 13px; color: var(--text-muted); }
+        
+        .form-card {
+            background: white; padding: 30px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            margin-bottom: 20px;
+        }
+        .form-card h2 { font-size: 18px; margin: 0 0 25px 0; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block; font-size: 11px; font-weight: bold;
+            text-transform: uppercase; margin-bottom: 8px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px 15px; border: 1px solid #e0e0e0;
+            border-radius: 8px; font-size: 14px; box-sizing: border-box;
+            background-color: #fafafa;
+        }
+        
+        /* DESAIN LIST DETAIL PESANAN DI WEB */
+        .order-summary-box {
+            background: #fff; padding: 20px; border-radius: 12px;
+            border: 1px dashed #ccc; margin-bottom: 20px;
+        }
+        .order-summary-box h4 { margin: 0 0 12px 0; font-size: 14px; color: var(--dark-color); text-transform: uppercase; letter-spacing: 0.5px;}
+        .summary-item {
+            display: flex; justify-content: space-between; font-size: 13.5px;
+            margin-bottom: 8px; color: #555; padding-bottom: 8px; border-bottom: 1px dashed #f1f1f1;
+        }
+        .summary-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        .btn {
+            background-color: var(--primary-color); color: white; border: none;
+            padding: 14px 20px; font-size: 15px; font-weight: bold;
+            border-radius: 8px; cursor: pointer; width: 100%;
+        }
+        .btn-outline {
+            background-color: transparent; border: 1px solid #ccc;
+            color: #555; margin-top: 10px;
+        }
+        .qris-container {
+            background-color: var(--dark-color); padding: 30px;
+            border-radius: 30px; display: flex; justify-content: center;
+        }
+        .qris-box {
+            background-color: #fdfbf7; padding: 30px;
+            border-radius: 15px; text-align: center; width: 100%; max-width: 450px;
+        }
+        .qris-header { font-size: 12px; letter-spacing: 3px; font-weight: bold; margin-bottom: 20px; }
+        .qris-image {
+            width: 180px; height: 180px; margin: 0 auto 20px auto;
+            background: #fff; padding: 10px; border: 1px solid #eee;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .qris-brand { font-family: 'Georgia', serif; font-weight: bold; font-size: 18px; margin-bottom: 5px; }
+        .qris-sub { font-size: 11px; color: var(--text-muted); }
+
+        /* MODAL / POP UP SUCCESS */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); display: flex; align-items: center;
+            justify-content: center; z-index: 1000; opacity: 0; visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-box {
+            background: white; padding: 30px; border-radius: 16px;
+            text-align: center; max-width: 400px; width: 90%;
+            transform: scale(0.8); transition: all 0.3s ease;
+        }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        .modal-icon {
+            width: 60px; height: 60px; background: #28a745; color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 30px; margin: 0 auto 20px auto;
+        }
+        .modal-box h3 { margin: 0 0 10px 0; font-size: 20px; }
+        .modal-box p { color: var(--text-muted); font-size: 14px; margin: 0 0 25px 0; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Transaksi Cepat via QRIS Digital</h1>
+
+    <div class="grid-layout">
+        <div>
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Scan QRIS</h3>
+                    <p>Buka e-wallet atau M-banking dan scan kode QRIS Mlaku Coffee.</p>
+                </div>
+            </div>
+
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Konfirmasi Pembayaran</h3>
+                    <p>Isi form konfirmasi di bawah ini agar pesananmu segera diproses.</p>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <h2>Form Konfirmasi Pembayaran</h2>
+                
+                <div class="form-group">
+                    <label>Nama Pemesan</label>
+                    <input type="text" id="input-nama" placeholder="Contoh: Budi Santoso">
+                </div>
+
+                <div class="form-group">
+                    <label>No. WhatsApp</label>
+                    <input type="text" id="input-wa" placeholder="08xxxxxxxxxx">
+                </div>
+
+                <div class="order-summary-box">
+                    <h4>Rincian Menu Dipesan:</h4>
+                    <div id="list-item-pesanan">
+                        </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Total Pembayaran</label>
+                    <input type="text" id="display-total" readonly style="font-weight: bold; background-color: #f0f0f0;">
+                </div>
+
+                <div class="form-group">
+                    <label>Metode Pembayaran</label>
+                    <select id="input-metode"><option>QRIS</option></select>
+                </div>
+
+                <button class="btn" onclick="submitPembayaran()">Konfirmasi Bayar Sekarang</button>
+                <button class="btn btn-outline" onclick="kembali()">← Kembali dan Ubah Pesanan</button>
+            </div>
+        </div>
+
+        <div class="qris-container">
+            <div class="qris-box">
+                <div class="qris-header">QRIS — SCAN & PAY</div>
+                <div class="qris-image">
+                    <img src="qrpembayaran.jpeg" alt="QRIS" width="150" height="150">
+                </div>
+                <div class="qris-brand">MLAKU COFFEE</div>
+                <div class="qris-sub">Kopi Keliling Premium · #ngopitanparibet</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="success-modal">
+    <div class="modal-box">
+        <div class="modal-icon">✓</div>
+        <h3>Pembayaran Berhasil!</h3>
+        <p>Data pembayaran Anda telah diterima. Halaman konfirmasi WhatsApp Anda akan terbuka dalam beberapa detik.</p>
+        <button class="btn" onclick="tutupModalDanKirimWA()">Selesai & Buka WA</button>
+    </div>
+</div>
+
+<script>
+    // Variabel global penyimpan data teks rincian belanja
+    let teksRincianWA = "";
+
+    window.onload = function() {
+        // 1. Ambil & Format Nominal Total Belanja
+        const totalDidapat = localStorage.getItem('totalPembayaran');
+        if (totalDidapat) {
+            const formatRupiah = "Rp " + parseInt(totalDidapat).toLocaleString('id-ID');
+            document.getElementById('display-total').value = formatRupiah;
+        } else {
+            document.getElementById('display-total').value = "Rp 0";
+        }
+        
+        // 2. Ambil Rincian Item Keranjang dari LocalStorage dan Tampilkan
+        const isiKeranjang = localStorage.getItem('cart');
+        const containerItem = document.getElementById('list-item-pesanan');
+        
+        if (isiKeranjang) {
+            try {
+                const objekKeranjang = JSON.parse(isiKeranjang);
+                let htmlElemen = "";
+                teksRincianWA = ""; // Reset string teks WA
+
+                // Looping data item belanjaan
+                for (const idMenu in objekKeranjang) {
+                    const item = objekKeranjang[idMenu];
+                    const subtotalItem = item.harga * item.quantity;
+                    
+                    // Membuat rincian visual di halaman web
+                    htmlElemen += `
+                        <div class="summary-item">
+                            <span>${item.name} <strong>(x${item.quantity})</strong></span>
+                            <span>Rp ${subtotalItem.toLocaleString('id-ID')}</span>
+                        </div>
+                    `;
+
+                    // Membuat format baris teks untuk kebutuhan kirim WhatsApp
+                    teksRincianWA += `• ${item.name} (x${item.quantity}) -> Rp ${subtotalItem.toLocaleString('id-ID')}\n`;
+                }
+                containerItem.innerHTML = htmlElemen;
+            } catch (error) {
+                containerItem.innerHTML = `<div style="font-size:12px; color:red;">Gagal memuat rincian item belanja.</div>`;
+            }
+        } else {
+            containerItem.innerHTML = `<div style="font-size:12px; color:#999;">Tidak ada rincian pesanan.</div>`;
+        }
+
+        document.getElementById('input-nama').focus();
+    }
+
+    // NAVIGASI ENTER TOMBOL FORM
+    document.getElementById('input-nama').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('input-wa').focus();
+        }
+    });
+
+    document.getElementById('input-wa').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('input-metode').focus();
+        }
+    });
+
+    document.getElementById('input-metode').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitPembayaran();
+        }
+    });
+
+    function kembali() {
+        window.location.href = "index.html";
+    }
+
+    function submitPembayaran() {
+        const nama = document.getElementById('input-nama').value.trim();
+        const wa = document.getElementById('input-wa').value.trim();
+        
+        if (nama === "" || wa === "") {
+            alert("Harap isi semua kolom data terlebih dahulu!");
+            return;
+        }
+
+        document.getElementById('success-modal').classList.add('show');
+        setTimeout(tutupModalDanKirimWA, 3500);
+    }
+
+    function tutupModalDanKirimWA() {
+        const nama = document.getElementById('input-nama').value;
+        const wa = document.getElementById('input-wa').value;
+        const total = document.getElementById('display-total').value;
+        const metode = document.getElementById('input-metode').value;
+        const nomorAdmin = "6282328582290"; 
+
+        // Menyusun teks pesanan otomatis, lengkap dengan rincian item belanjaan
+        const teksPesan = `Halo Mlaku Coffee, saya ingin mengonfirmasi pembayaran.\n\n` +
+                          `*Detail Konfirmasi*:\n` +
+                          `• Nama Pemesan: ${nama}\n` +
+                          `• No. WhatsApp: ${wa}\n` +
+                          `• Metode: ${metode}\n\n` +
+                          `*Rincian Menu Dipesan*:\n` +
+                          (teksRincianWA ? teksRincianWA : "-\n") +
+                          `*Total Akhir*: *${total}*\n\n` +
+                          `Mohon segera diproses ya, terima kasih! 🙏✨`;
+
+        const urlWA = `https://api.whatsapp.com/send?phone=${nomorAdmin}&text=${encodeURIComponent(teksPesan)}`;
+        
+        document.getElementById('success-modal').classList.remove('show');
+        window.location.href = urlWA;
+    }
+</script>
+
+</body>
+</html>
